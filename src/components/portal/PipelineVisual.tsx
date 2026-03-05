@@ -39,9 +39,8 @@ const PipelineVisual = ({ activePhase, counts, compact }: PipelineVisualProps) =
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className={`relative flex flex-col items-center ${compact ? "p-2" : "p-3 md:p-4"} rounded-xl bg-gradient-to-br ${phaseColorClasses[phase]} text-white shadow-lg ${
-                  isActive ? "ring-4 ring-white/50 scale-105" : ""
-                } ${compact ? "min-w-[80px]" : "min-w-[120px] md:min-w-[140px]"}`}
+                className={`relative flex flex-col items-center ${compact ? "p-2" : "p-3 md:p-4"} rounded-xl bg-gradient-to-br ${phaseColorClasses[phase]} text-white shadow-lg ${isActive ? "ring-4 ring-white/50 scale-105" : ""
+                  } ${compact ? "min-w-[80px]" : "min-w-[120px] md:min-w-[140px]"}`}
               >
                 <Icon className={compact ? "h-5 w-5 mb-1" : "h-6 w-6 md:h-8 md:w-8 mb-2"} />
                 <span className={`font-bold ${compact ? "text-[10px]" : "text-xs md:text-sm"} text-center leading-tight`}>

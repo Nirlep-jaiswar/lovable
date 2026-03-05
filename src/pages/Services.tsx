@@ -83,7 +83,7 @@ const Services = () => {
                     </div>
                   </div>
                   <Button asChild size="sm" className="w-full bg-primary">
-                    <Link to="/submit">
+                    <Link to={`/submit?service=${encodeURIComponent(service.name)}`}>
                       Apply Now <ArrowRight className="ml-1 h-3 w-3" />
                     </Link>
                   </Button>

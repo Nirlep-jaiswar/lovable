@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
+from openai import OpenAI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import engine, get_db
@@ -8,6 +9,7 @@ import uuid
 import datetime
 from pydantic import BaseModel
 from typing import List, Optional
+import os
 
 # Create tables
 models.Base.metadata.create_all(bind=engine)
@@ -79,24 +81,32 @@ def tier1_regex_check(ocr_text: str):
 import google.generativeai as genai
 import json
 
-genai.configure(api_key="AIzaSyDm1PARb0c3OXonXezVtZRKaTCAB5nKhqA")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+genai.configure(api_key=GEMINI_API_KEY)
 
 # TIER 2: LLM FALLBACK (Using Real Gemini API)
-def tier2_llm_check(ocr_text: str, form_name: str):
+def tier2_llm_check(ocr_text: str, user_name: str, expected_doc_type: str):
     """
     Fallback agent that uses Gemini to read OCR and verify document validity.
     """
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         prompt = f"""
         You are an AI document verification agent for a government portal.
-        Extracted OCR text from the uploaded document: "{ocr_text}"
-        The user submitted the name: "{form_name}"
         
-        Analyze the OCR text to see if this appears to be a valid official document (ID, marksheet, tax form, etc.), and if it belongs to "{form_name}".
+        INPUT DATA:
+        - Extracted OCR text: "{ocr_text}"
+        - User's Name: "{user_name}"
+        - Declared Document Type: "{expected_doc_type}"
+        
+        TASKS:
+        1. Verify if the OCR text corresponds to the "Declared Document Type".
+        2. Check if the "User's Name" (or a significant part of it) appears in the document.
+        3. Determine if the document looks like an official government ID, certificate, or legal document.
+        
         Output ONLY valid JSON (no markdown formatting, no backticks) with these exactly three keys:
-        - "status": "Verified" if valid and matches user, or "Flagged" if suspicious or missing name.
-        - "reason": A short 1-sentence explanation of your finding (e.g., "Found name matching ABC on what appears to be a valid marksheet.")
+        - "status": "Verified" if it matches the document type and name, or "Flagged" if suspicious, non-matching, or missing critical info.
+        - "reason": A short 1-sentence explanation of your finding (e.g., "Confirmed as Aadhaar card for John Doe.")
         - "priority": An integer. 2 for standard verified docs, 4 for flagged/suspect docs, 1 for emergency/security related.
         """
         response = model.generate_content(prompt)
@@ -114,9 +124,9 @@ def tier2_llm_check(ocr_text: str, form_name: str):
     except Exception as e:
         print(f"LLM Error: {e}")
         # Default safety fallback if API fails
-        name_verified = form_name.lower().split()[0] in ocr_text.lower() if form_name else False
+        name_verified = user_name.lower().split()[0] in ocr_text.lower() if user_name else False
         if name_verified:
-            return "Verified", f"Local Fallback: name '{form_name}' exists in document.", 2
+            return "Verified", f"Local Fallback: name '{user_name}' exists in document.", 2
         else:
             return "Flagged", "Local Fallback: could not find matching name.", 4
 
@@ -133,29 +143,32 @@ async def submit_application(
     file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)):
 
-    tracking_id = f"GT-{uuid.uuid4().hex[:8].upper()}"
+    # Create a descriptive tracking ID prefix from the form name
+    import re
+    clean_name = re.sub(r'[^A-Z0-9]', '', (document_name or category or "APP").upper())
+    tracking_id = f"GT-{clean_name[:12]}-{uuid.uuid4().hex[:6].upper()}"
     
-    # 🏃 STEP 1: OCR INGESTION
+    # 🏃 STEP 1: OCR INGESTION (Using Tesseract now)
     ocr_text = ""
     if file:
         content = await file.read()
-        ocr_text = ocr_utils.process_document(file.filename, content)
+        ocr_text = ocr_utils.process_document(file.filename, content, api_key=GEMINI_API_KEY)
     else:
         ocr_text = document_desc
 
     # 🏃 STEP 2: TIER 1 (REGEX)
     is_v, reason, prio = tier1_regex_check(ocr_text)
-    tier = "Tier 1: OCR+Regex"
+    tier = "Tier 1: OCR (Tesseract)+Regex"
     status = "Approved" if is_v else "In Review"
 
-    # 🏃 STEP 3: TIER 2 (LLM FALLBACK)
+    # 🏃 STEP 3: TIER 2 (LLM FALLBACK - Gemini Verification)
     if not is_v:
-        # Trigger Fallback Agent
-        res, llm_reason, llm_prio = tier2_llm_check(ocr_text, name)
+        # Trigger Fallback Agent with Gemini verification
+        res, llm_reason, llm_prio = tier2_llm_check(ocr_text, name, document_name or category)
         is_v = res
         reason = llm_reason
         prio = llm_prio
-        tier = "Tier 2: LLM Fallback"
+        tier = "Tier 2: LLM Verification (Gemini)"
         status = "Verified" if res == "Verified" else "Flagged for Review"
 
     # 🏃 STEP 4: ROUTING ENGINE
@@ -206,6 +219,65 @@ def get_application(tracking_id: str, db: Session = Depends(get_db)):
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
     return application
+
+CHAT_API_KEY = os.getenv("CHAT_API_KEY", "")
+
+class ChatRequest(BaseModel):
+    message: str
+    tracking_id: Optional[str] = None
+
+@app.post("/api/chatbot")
+async def chat_with_ai(request: ChatRequest, db: Session = Depends(get_db)):
+    """
+    Chatbot endpoint that provides support based on application context (OpenAI).
+    """
+    try:
+        # 1. Fetch context if tracking_id is provided
+        context_str = "No specific application context provided. Guide the user on how to submit or track applications."
+        if request.tracking_id:
+            app_data = db.query(models.Application).filter(models.Application.tracking_id == request.tracking_id).first()
+            if app_data:
+                context_str = f"""
+                Application Status Context:
+                - ID: {app_data.tracking_id}
+                - Applicant: {app_data.name}
+                - Status: {app_data.status}
+                - Department: {app_data.department}
+                - Verification: {app_data.is_verified}
+                - AI Reasoning: {app_data.ai_reasoning}
+                """
+        
+        # 2. Call Groq (via OpenAI SDK)
+        client = OpenAI(
+            base_url="https://api.groq.com/openai/v1",
+            api_key=CHAT_API_KEY,
+        )
+        
+        system_prompt = f"""
+        You are 'GovTech Assistant', a professional AI bot for a government portal.
+        Your goal is to help citizens understand their application status.
+        
+        {context_str}
+        
+        RULES:
+        - Be empathetic and clear.
+        - If the status is 'Rejected' or 'Flagged', explain the reasoning gently.
+        - Keep answers concise (max 3 sentences).
+        """
+        
+        gpt_response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": request.message}
+            ],
+            max_tokens=200
+        )
+        
+        return {"response": gpt_response.choices[0].message.content}
+    except Exception as e:
+        print(f"Chatbot Error: {e}")
+        return {"response": "I'm currently undergoing some neural maintenance. Please try again in 30 seconds."}
 
 if __name__ == "__main__":
     import uvicorn

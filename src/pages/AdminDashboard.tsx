@@ -168,17 +168,29 @@ const AdminDashboard = () => {
             <Card><CardHeader><CardTitle className="text-base">Phase 1: Document Ingestion & OCR</CardTitle></CardHeader>
               <CardContent>
                 <Table>
-                  <TableHeader><TableRow>
-                    <TableHead>Tracking ID</TableHead><TableHead>Document</TableHead><TableHead>Applicant</TableHead><TableHead>Tier</TableHead><TableHead>OCR Status</TableHead>
-                  </TableRow></TableHeader>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-bold">Form Type</TableHead>
+                      <TableHead className="font-bold">Tracking ID</TableHead>
+                      <TableHead className="font-bold">Applicant</TableHead>
+                      <TableHead className="font-bold text-center">OCR</TableHead>
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
                     {submissions.map(s => (
-                      <TableRow key={s.id}>
-                        <TableCell className="font-mono text-xs">{s.trackingId}</TableCell>
-                        <TableCell className="text-xs">{s.documentName}</TableCell>
-                        <TableCell className="text-xs">{s.citizenName}</TableCell>
-                        <TableCell><Badge variant="outline" className="text-[10px]">{s.extractedFields?.["Tier"] || "Tier 1"}</Badge></TableCell>
-                        <TableCell><Badge className={statusColors[s.ocrStatus || "pending"]}>{s.ocrStatus}</Badge></TableCell>
+                      <TableRow key={s.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-semibold">{s.documentName}</TableCell>
+                        <TableCell>
+                          <code className="bg-primary/10 text-primary px-2 py-1 rounded text-[11px] font-bold border border-primary/20">
+                            {s.trackingId}
+                          </code>
+                        </TableCell>
+                        <TableCell className="text-sm">{s.citizenName}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge className={statusColors[s.ocrStatus || "pending"] + " text-[10px]"}>
+                            {s.ocrStatus}
+                          </Badge>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -192,9 +204,12 @@ const AdminDashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {submissions.filter(s => s.extractedFields).map(s => (
-                    <Card key={s.id} className="bg-muted/30">
+                    <Card key={s.id} className="bg-white dark:bg-card border-primary/10 hover:border-primary/30 transition-all shadow-sm">
                       <CardContent className="pt-4">
-                        <p className="font-mono text-xs text-muted-foreground mb-2">{s.trackingId}</p>
+                        <div className="flex justify-between items-start mb-3">
+                          <p className="font-bold text-sm text-foreground">{s.documentName}</p>
+                          <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground uppercase">{s.trackingId.split('-').pop()}</code>
+                        </div>
                         <div className="space-y-1">
                           {Object.entries(s.extractedFields!).map(([k, v]) => (
                             <div key={k} className="flex justify-between text-xs">
@@ -215,17 +230,27 @@ const AdminDashboard = () => {
             <Card><CardHeader><CardTitle className="text-base">Phase 3: Agentic Processing</CardTitle></CardHeader>
               <CardContent>
                 <Table>
-                  <TableHeader><TableRow>
-                    <TableHead>Tracking ID</TableHead><TableHead>Category</TableHead><TableHead>Department</TableHead><TableHead>Priority</TableHead><TableHead>Validation</TableHead>
-                  </TableRow></TableHeader>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-bold">Form Type</TableHead>
+                      <TableHead className="font-bold">Tracking ID</TableHead>
+                      <TableHead className="font-bold whitespace-nowrap">Category</TableHead>
+                      <TableHead className="font-bold text-center">Priority</TableHead>
+                      <TableHead className="font-bold text-center">Validation</TableHead>
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
                     {submissions.filter(s => s.validationStatus).map(s => (
-                      <TableRow key={s.id}>
-                        <TableCell className="font-mono text-xs">{s.trackingId}</TableCell>
-                        <TableCell className="text-xs">{s.category}</TableCell>
-                        <TableCell className="text-xs">{s.department}</TableCell>
-                        <TableCell><Badge className={priorityColors[s.priority]}>{s.priority}</Badge></TableCell>
-                        <TableCell><Badge className={s.validationStatus === "valid" ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}>{s.validationStatus}</Badge></TableCell>
+                      <TableRow key={s.id} className="hover:bg-muted/30 transition-colors text-xs">
+                        <TableCell className="font-semibold">{s.documentName}</TableCell>
+                        <TableCell>
+                          <code className="bg-primary/10 text-primary px-2 py-1 rounded text-[10px] font-bold border border-primary/20 whitespace-nowrap">
+                            {s.trackingId}
+                          </code>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{s.category}</TableCell>
+                        <TableCell className="text-center"><Badge className={priorityColors[s.priority] + " text-[10px]"}>{s.priority}</Badge></TableCell>
+                        <TableCell className="text-center"><Badge className={(s.validationStatus === "valid" ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800") + " text-[10px]"}>{s.validationStatus}</Badge></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -264,16 +289,31 @@ const AdminDashboard = () => {
             <Card><CardHeader><CardTitle className="text-base">Phase 5: Automation & Integration</CardTitle></CardHeader>
               <CardContent>
                 <Table>
-                  <TableHeader><TableRow>
-                    <TableHead>Tracking ID</TableHead><TableHead>Department</TableHead><TableHead>Routed</TableHead><TableHead>Status</TableHead>
-                  </TableRow></TableHeader>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-bold">Form Type</TableHead>
+                      <TableHead className="font-bold">Tracking ID</TableHead>
+                      <TableHead className="font-bold">Department</TableHead>
+                      <TableHead className="font-bold">Integration</TableHead>
+                      <TableHead className="font-bold text-center">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
                     {submissions.filter(s => s.automationStatus).map(s => (
-                      <TableRow key={s.id}>
-                        <TableCell className="font-mono text-xs">{s.trackingId}</TableCell>
-                        <TableCell className="text-xs">{s.department}</TableCell>
-                        <TableCell className="text-xs">Legacy System API</TableCell>
-                        <TableCell><Badge className={s.automationStatus === "completed" ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"}>{s.automationStatus}</Badge></TableCell>
+                      <TableRow key={s.id} className="hover:bg-muted/30 transition-colors text-xs">
+                        <TableCell className="font-semibold">{s.documentName}</TableCell>
+                        <TableCell>
+                          <code className="bg-primary/10 text-primary px-2 py-1 rounded text-[10px] font-bold border border-primary/20 whitespace-nowrap">
+                            {s.trackingId}
+                          </code>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{s.department}</TableCell>
+                        <TableCell className="italic text-muted-foreground">Legacy System API</TableCell>
+                        <TableCell className="text-center">
+                          <Badge className={(s.automationStatus === "completed" ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800") + " text-[10px]"}>
+                            {s.automationStatus}
+                          </Badge>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

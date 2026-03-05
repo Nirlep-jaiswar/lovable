@@ -93,6 +93,19 @@ const TrackApplication = () => {
 
         {result && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto space-y-6">
+            {/* Hero Header for Result */}
+            <div className="bg-primary/5 border border-primary/10 rounded-xl p-8 text-center bg-gradient-to-br from-primary/10 to-transparent">
+              <Badge className="mb-2 bg-primary/20 text-primary border-none text-[10px] uppercase tracking-wider">
+                Application Found
+              </Badge>
+              <h3 className="text-3xl font-bold text-foreground mb-2">
+                {result.documentName}
+              </h3>
+              <p className="font-mono text-sm text-muted-foreground bg-white/40 dark:bg-black/20 inline-block px-3 py-1 rounded-full">
+                {result.trackingId}
+              </p>
+            </div>
+
             {/* Pipeline tracker */}
             <Card>
               <CardHeader>
