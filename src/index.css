@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 220 40% 13%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 40% 13%;
+
+    --primary: 220 60% 20%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 90% 55%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 20% 94%;
+    --muted-foreground: 220 15% 46%;
+
+    --accent: 30 90% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 220 60% 20%;
+
+    --radius: 0.5rem;
+
+    --gov-navy: 220 60% 20%;
+    --gov-navy-light: 220 50% 30%;
+    --gov-saffron: 30 90% 55%;
+    --gov-green: 140 50% 35%;
+    --gov-white: 0 0% 100%;
+    --gov-cream: 40 30% 96%;
+    --gov-blue-accent: 210 80% 55%;
+
+    --sidebar-background: 220 60% 18%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 30 90% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 50% 25%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 220 50% 25%;
+    --sidebar-ring: 30 90% 55%;
+  }
+
+  .dark {
+    --background: 220 40% 8%;
+    --foreground: 210 20% 95%;
+
+    --card: 220 40% 12%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 220 40% 12%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 210 80% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 90% 55%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 30% 18%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 30 90% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 30% 22%;
+    --input: 220 30% 22%;
+    --ring: 210 80% 55%;
+
+    --sidebar-background: 220 40% 8%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 30 90% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 30% 18%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 220 30% 18%;
+    --sidebar-ring: 30 90% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Noto Sans', sans-serif;
+  }
+  h1, h2, h3 {
+    font-family: 'Noto Sans', sans-serif;
+  }
+}
+
+@layer utilities {
+  .gov-gradient {
+    background: linear-gradient(135deg, hsl(var(--gov-navy)) 0%, hsl(var(--gov-navy-light)) 100%);
+  }
+  .saffron-gradient {
+    background: linear-gradient(90deg, hsl(var(--gov-saffron)) 0%, hsl(35, 95%, 60%) 100%);
+  }
+  .text-saffron {
+    color: hsl(var(--gov-saffron));
+  }
+}
